@@ -815,6 +815,7 @@ jobs:
           tests/boundary/providers/native/nativeUiOffscreenWindow.test.ts
           tests/boundary/process/nativeUiVerifierLane.test.ts
           tests/boundary/cli/nativeSignatureCli.test.ts
+          tests/boundary/cli/nativeMachoImportNamesCli.test.ts
           tests/boundary/cli/nativeMachoArm64_32Cli.test.ts
           tests/boundary/cli/nativeMachoEncryptionCli.test.ts
           tests/boundary/mcp/nativeSignatureTargetBindingMcp.test.ts
@@ -934,6 +935,7 @@ jobs:
           src/contracts/sessionPathInputs.test.ts
           tests/boundary/filesystem/directAnalysisSnapshotReplay.test.ts
           tests/boundary/mcp/rawBinaryMcp.test.ts
+          tests/boundary/mcp/advertisedDialect.test.ts
           tests/boundary/filesystem/safeOutputTree.test.ts
           tests/boundary/providers/native/artifactProvider.archiveSafety.test.ts
           tests/boundary/providers/native/artifactProvider.extractionCompleteness.test.ts

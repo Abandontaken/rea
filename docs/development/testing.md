@@ -180,12 +180,25 @@ cause when a directly checked caller `AbortSignal` is converted to an
 follow indirect cancellation helpers, or prove that an explicit cause equals
 the caller's reason. Keep focused boundary and lifecycle tests for those facts.
 
+Build a cancellation with `cancelledBy` from `src/domain/analysisErrorCore.ts`.
+Its reason argument is required: an aborted `AbortSignal`, an earlier
+`AnalysisCancelledError`, a `carriedReason(...)` recovered from an inner
+failure, or an `OwnerCancellation` when REA itself closed the work's owner. The
+architecture guard rejects a direct `new AnalysisCancelledError(` outside that
+module. Files that still construct one directly are listed with their counts in
+`scripts/verify/architecture-guard-baselines.json`; a file may not exceed its
+count, and after removing copies run
+`node scripts/verify/architecture-guards.mjs --shrink-baselines` to lower it.
+
 `rea/no-evidence-json-preadmission` rejects direct generic JSON parses in
 `createEvidence` payload expressions; it does not analyze intermediate values.
 `rea/no-positional-tool-contract` rejects catalog indices used to select
 operation names, schemas or types; display-only selection remains allowed.
 `rea/no-fixture-root-cleanup` follows `const` fixture-root aliases into teardown
 deletion; mutable bindings and mixed root arrays remain outside its scope.
+`rea/project-wait-deadline` resolves Vitest's `vi` and `expect` bindings,
+including aliases and namespace imports; a shadowed local or a fixture method
+with the same name is not reported.
 
 `rea/no-shared-module-mock` resolves Vitest import bindings before rejecting
 module mocks in projects without per-file isolation. The test-project definitions
@@ -276,7 +289,12 @@ operation name rather than array position.
 
 Check advertised schemas after SDK conversion for every supported schema
 profile. Meta-schema validity does not establish client acceptance or useful
-rendered declarations. Keep canonical rejection checks separate from the
+rendered declarations. `src/contracts/advertisedDialect.ts` owns the portable
+advertised dialect: the keyword allowlist, size and depth limits, and the regex
+grammar that compiles in V8, Python, RE2 and Rust. `advertisedDialect.test.ts`
+lists every input, output and catalog profile combination and compares the
+violation counts with `advertisedDialectBaseline.ts`, which may only shrink;
+the packaged catalog check applies the same rules to the default profiles. Keep canonical rejection checks separate from the
 intentionally reduced compact advertisement, and probe actual client renderers
 when changing schema representations.
 
@@ -315,6 +333,18 @@ child fails with its captured output. Pass `timeoutMs` only when the child's dea
 `// @module-tag long-running`. Assert elapsed time explicitly when speed is the
 behavior under test. Derive an explicit deadline only when a test must outlive
 an operation deadline whose diagnostics it checks.
+
+Waits follow the same policy; Vitest's one-second `expect.poll` and
+`vi.waitFor` defaults assume a host's speed. A wait may take as long as its
+test may run, less the reporting reserve: projects configure `expect.poll`
+that way, and `waitFor` from `tests/support/testWait.ts` replaces `vi.waitFor`.
+Fixture waits such as `awaitAcknowledgement` default to the same deadline.
+`expect.poll` keeps its project's budget in a `long-running` test, while
+`waitFor` follows the deadline the tag applies.
+`rea/project-wait-deadline` rejects `vi.waitFor` and explicit poll timeouts. When promptness is the behavior under test, such as
+cancellation that must preempt a slower production deadline, a wait timeout is
+not its oracle: order the condition before releasing the gate that would
+otherwise satisfy it, or compare elapsed time with the deadline it must beat.
 
 Keep capacity fixtures intact when diagnosing a test failure. For byte equality
 of large buffers, use `Buffer.equals` or `Buffer.compare`; a generic structural
